@@ -85,4 +85,22 @@ describe('shared mobile controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить таймер' }));
     expect(screen.getByText('0:01')).toBeInTheDocument();
   });
+
+  it('accepts a custom duration and uses it as the new reset value', () => {
+    render(<Timer initialSeconds={180} />);
+
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Минуты таймера' }), {
+      target: { value: '12' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Секунды таймера' }), {
+      target: { value: '34' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Задать' }));
+
+    expect(screen.getByText('12:34')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Старт' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Пауза' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить таймер' }));
+    expect(screen.getByText('12:34')).toBeInTheDocument();
+  });
 });

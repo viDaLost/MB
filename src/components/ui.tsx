@@ -328,10 +328,14 @@ export function Timer({
   initialSeconds?: number;
   preferences?: GamePreferences;
 }) {
+  const normalizedInitial = Math.max(1, Math.trunc(initialSeconds));
+  const [configuredSeconds, setConfiguredSeconds] = useState(normalizedInitial);
   const [{ remaining, running }, setTimer] = useState({
-    remaining: initialSeconds,
+    remaining: normalizedInitial,
     running: false,
   });
+  const [minutesInput, setMinutesInput] = useState(Math.floor(normalizedInitial / 60));
+  const [secondsInput, setSecondsInput] = useState(normalizedInitial % 60);
 
   useEffect(() => {
     if (!running || remaining <= 0) return;
@@ -352,6 +356,16 @@ export function Timer({
     if (preferences) feedback(preferences, 'alert');
   }, [preferences, remaining]);
 
+  const applyTime = () => {
+    const minutesValue = Math.max(0, Math.min(999, Math.trunc(minutesInput || 0)));
+    const secondsValue = Math.max(0, Math.min(59, Math.trunc(secondsInput || 0)));
+    const next = Math.max(1, minutesValue * 60 + secondsValue);
+    setMinutesInput(Math.floor(next / 60));
+    setSecondsInput(next % 60);
+    setConfiguredSeconds(next);
+    setTimer({ remaining: next, running: false });
+  };
+
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
   return (
@@ -365,7 +379,7 @@ export function Timer({
       <strong>
         {minutes}:{String(seconds).padStart(2, '0')}
       </strong>
-      <div>
+      <div className="timer__actions">
         <Button
           variant="ghost"
           disabled={remaining === 0}
@@ -375,10 +389,40 @@ export function Timer({
         </Button>
         <IconButton
           label="Сбросить таймер"
-          onClick={() => setTimer({ remaining: initialSeconds, running: false })}
+          onClick={() => setTimer({ remaining: configuredSeconds, running: false })}
         >
           <RotateCcw aria-hidden="true" />
         </IconButton>
+      </div>
+      <div className="timer__settings" aria-label="Настройка времени">
+        <label>
+          <span>мин</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={999}
+            value={minutesInput}
+            aria-label="Минуты таймера"
+            onChange={(event) => setMinutesInput(Number(event.target.value))}
+          />
+        </label>
+        <span>:</span>
+        <label>
+          <span>сек</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={59}
+            value={secondsInput}
+            aria-label="Секунды таймера"
+            onChange={(event) => setSecondsInput(Number(event.target.value))}
+          />
+        </label>
+        <Button variant="secondary" onClick={applyTime}>
+          Задать
+        </Button>
       </div>
     </div>
   );
