@@ -19,6 +19,7 @@ import {
   MAFIA_ROLES,
   TEAM_LABELS,
   type MafiaPreset,
+  type MafiaRoleId,
   type MafiaTeam,
 } from '../../data/mafia';
 import { createSeed } from '../../lib/rng';
@@ -47,7 +48,7 @@ import {
   nightTargetKey,
   validTargets,
   type MafiaGameState,
-  type NightStep,
+  type NightRole,
 } from './engine';
 
 const TEAM_COPY: Record<MafiaTeam, { title: string; text: string }> = {
@@ -60,7 +61,7 @@ const TEAM_COPY: Record<MafiaTeam, { title: string; text: string }> = {
 };
 
 const NIGHT_META: Record<
-  NightStep,
+  NightRole,
   { title: string; eyebrow: string; description: string; icon: typeof Moon }
 > = {
   mafia: {
@@ -125,89 +126,134 @@ function PhaseFrame({
   );
 }
 
+const ROLE_IDS = Object.keys(MAFIA_ROLES) as MafiaRoleId[];
+
+function roleCountsFromDeck(deck: MafiaRoleId[]) {
+  return ROLE_IDS.reduce<Record<MafiaRoleId, number>>(
+    (result, role) => ({ ...result, [role]: deck.filter((item) => item === role).length }),
+    { civilian: 0, mafia: 0, don: 0, detective: 0, doctor: 0, maniac: 0 },
+  );
+}
+
+function expandRoleCounts(counts: Record<MafiaRoleId, number>) {
+  return ROLE_IDS.flatMap((role) => Array.from({ length: counts[role] }, () => role));
+}
+
 function Setup({
   onStart,
 }: {
-  onStart: (names: string[], preset: MafiaPreset, seed: string) => void;
+  onStart: (names: string[], preset: MafiaPreset, seed: string, customRoles: MafiaRoleId[]) => void;
 }) {
   const [count, setCount] = useState(8);
   const [preset, setPreset] = useState<MafiaPreset>('noir');
   const [names, setNames] = useState(() =>
     Array.from({ length: 8 }, (_, index) => `Игрок ${index + 1}`),
   );
+  const [customCounts, setCustomCounts] = useState(() =>
+    roleCountsFromDeck(getRoleDeck(8, 'noir')),
+  );
   const [seed, setSeed] = useState(() => createSeed('CITY'));
 
   const updateCount = (next: number) => {
+    const difference = next - count;
     setCount(next);
     setNames((current) =>
       Array.from({ length: next }, (_, index) => current[index] ?? `Игрок ${index + 1}`),
     );
+    if (preset === 'custom') {
+      setCustomCounts((current) => ({
+        ...current,
+        civilian: Math.max(0, current.civilian + difference),
+      }));
+    }
   };
+
+  const updatePreset = (next: MafiaPreset) => {
+    if (next === 'custom' && preset !== 'custom') {
+      setCustomCounts(roleCountsFromDeck(getRoleDeck(count, preset)));
+    }
+    setPreset(next);
+  };
+
   const duplicateNames = names
     .map((name) => name.trim().toLocaleLowerCase())
     .filter((name, index, items) => name && items.indexOf(name) !== index);
-  const roleDeck = getRoleDeck(count, preset);
-  const roleCounts = Object.entries(
-    roleDeck.reduce<Record<string, number>>((result, role) => {
-      result[role] = (result[role] ?? 0) + 1;
-      return result;
-    }, {}),
-  );
+  const customRoles = expandRoleCounts(customCounts);
+  const roleDeck = preset === 'custom' ? customRoles : getRoleDeck(count, preset);
+  const roleTotal = roleDeck.length;
+  const cityCount = roleDeck.filter((role) => MAFIA_ROLES[role].team === 'city').length;
+  const threatCount = roleDeck.filter((role) => MAFIA_ROLES[role].team !== 'city').length;
+  const customValid = preset !== 'custom' || (roleTotal === count && cityCount > 0 && threatCount > 0);
 
   return (
-    <main className="game-main setup-layout">
-      <section className="setup-hero mafia-panel">
-        <span className="eyebrow">Новая партия</span>
-        <h1>
-          Соберите
-          <br />
-          ночной город
-        </h1>
-        <p>Состав автоматически адаптируется к числу игроков и выбранному режиму.</p>
-        <div className="setup-stats">
-          <div>
-            <strong>{count}</strong>
-            <span>участников</span>
-          </div>
-          <div>
-            <strong>{roleDeck.filter((role) => MAFIA_ROLES[role].team === 'mafia').length}</strong>
-            <span>синдикат</span>
-          </div>
-          <div>
-            <strong>{roleDeck.filter((role) => MAFIA_ROLES[role].team === 'city').length}</strong>
-            <span>город</span>
-          </div>
+    <main className="game-main setup-layout setup-layout--single">
+      <section className="setup-form mafia-panel minimal-setup">
+        <div className="minimal-setup__header">
+          <span className="eyebrow">Новая партия</span>
+          <h1>Мафия</h1>
+          <p>Укажите игроков, состав ролей и начните раздачу.</p>
         </div>
-      </section>
 
-      <section className="setup-form mafia-panel">
-        <Stepper label="Количество игроков" value={count} min={5} max={16} onChange={updateCount} />
+        <Stepper label="Количество игроков" value={count} min={5} max={30} onChange={updateCount} />
         <Segmented
-          label="Сценарий ролей"
+          label="Состав ролей"
           value={preset}
           options={(Object.keys(MAFIA_PRESETS) as MafiaPreset[]).map((value) => ({
             value,
             label: MAFIA_PRESETS[value].name,
             note: MAFIA_PRESETS[value].note,
           }))}
-          onChange={setPreset}
+          onChange={updatePreset}
         />
         <p className="field-note">{MAFIA_PRESETS[preset].description}</p>
 
-        <div className="role-composition" aria-label="Состав ролей">
-          {roleCounts.map(([role, amount]) => (
-            <span
-              key={role}
-              className={`role-pill role-pill--${MAFIA_ROLES[role as keyof typeof MAFIA_ROLES].team}`}
-            >
-              {MAFIA_ROLES[role as keyof typeof MAFIA_ROLES].name} × {amount}
-            </span>
-          ))}
-        </div>
+        {preset === 'custom' ? (
+          <div className="custom-role-editor" aria-label="Настройка ролей">
+            <div className="custom-role-editor__status">
+              <span>Ролей: {roleTotal} из {count}</span>
+              <small>
+                {roleTotal < count
+                  ? `Осталось добавить: ${count - roleTotal}`
+                  : roleTotal > count
+                    ? `Уберите ролей: ${roleTotal - count}`
+                    : cityCount === 0 || threatCount === 0
+                      ? 'Нужны мирная и враждебная стороны'
+                      : 'Состав готов'}
+              </small>
+            </div>
+            <div className="custom-role-grid">
+              {ROLE_IDS.map((role) => (
+                <Stepper
+                  key={role}
+                  label={MAFIA_ROLES[role].name}
+                  value={customCounts[role]}
+                  min={0}
+                  max={count}
+                  onChange={(value) =>
+                    setCustomCounts((current) => ({ ...current, [role]: value }))
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="role-composition" aria-label="Состав ролей">
+            {Object.entries(roleCountsFromDeck(roleDeck))
+              .filter(([, amount]) => amount > 0)
+              .map(([role, amount]) => (
+                <span
+                  key={role}
+                  className={`role-pill role-pill--${MAFIA_ROLES[role as MafiaRoleId].team}`}
+                >
+                  {MAFIA_ROLES[role as MafiaRoleId].name} × {amount}
+                </span>
+              ))}
+          </div>
+        )}
 
         <div className="field-stack">
           <div className="field-heading">
-            <span className="field-label">Имена за столом</span>
+            <span className="field-label">Имена игроков</span>
             <small>Можно оставить номера</small>
           </div>
           <div className="name-grid">
@@ -254,10 +300,10 @@ function Setup({
         <Button
           variant="primary"
           block
-          disabled={duplicateNames.length > 0 || !seed.trim()}
-          onClick={() => onStart(names, preset, seed.trim())}
+          disabled={duplicateNames.length > 0 || !seed.trim() || !customValid}
+          onClick={() => onStart(names, preset, seed.trim(), customRoles)}
         >
-          Запечатать роли
+          Раздать роли
         </Button>
       </section>
     </main>
@@ -352,8 +398,8 @@ function Night({
               const targetId = state.nightActions[nightTargetKey(item)];
               const target = state.players.find((player) => player.id === targetId);
               return (
-                <div key={item}>
-                  <span>{NIGHT_META[item].title}</span>
+                <div key={item.id}>
+                  <span>{NIGHT_META[item.role].title}</span>
                   <strong>{target?.name ?? 'Пропуск'}</strong>
                 </div>
               );
@@ -366,19 +412,17 @@ function Night({
       </main>
     );
   }
-  const meta = NIGHT_META[step];
+  const meta = NIGHT_META[step.role];
   const key = nightTargetKey(step);
   const selected = state.nightActions[key];
   const Icon = meta.icon;
-  const checkedPlayer = state.players.find(
-    (player) => player.id === state.detectiveResult?.playerId,
-  );
-  const donCheckedPlayer = state.players.find((player) => player.id === state.donResult?.playerId);
+  const actor = state.players.find((player) => player.id === step.actorId);
+  const checkedPlayer = state.players.find((player) => player.id === selected);
   return (
     <main className="game-main phase-layout">
       <ProgressRail items={['Раздача', 'Ночь', 'День', 'Голосование']} current={1} />
       <PhaseFrame
-        eyebrow={`${meta.eyebrow} • шаг ${state.nightStepIndex + 1} из ${steps.length}`}
+        eyebrow={`${meta.eyebrow}${actor ? ` • ${actor.name}` : ''} • шаг ${state.nightStepIndex + 1} из ${steps.length}`}
         title={meta.title}
         copy={meta.description}
         icon={Icon}
@@ -398,11 +442,11 @@ function Night({
             </button>
           ))}
         </div>
-        {step === 'detective' && checkedPlayer && state.detectiveResult && (
+        {step.role === 'detective' && checkedPlayer && (
           <div
             className={cx(
               'investigation-result',
-              state.detectiveResult.isMafia ? 'danger' : 'safe',
+              checkedPlayer.team === 'mafia' ? 'danger' : 'safe',
             )}
             role="status"
           >
@@ -411,22 +455,22 @@ function Night({
               <span>Результат проверки</span>
               <strong>
                 {checkedPlayer.name}:{' '}
-                {state.detectiveResult.isMafia ? 'связан с синдикатом' : 'не связан с синдикатом'}
+                {checkedPlayer.team === 'mafia' ? 'связан с синдикатом' : 'не связан с синдикатом'}
               </strong>
             </div>
           </div>
         )}
-        {step === 'don' && donCheckedPlayer && state.donResult && (
+        {step.role === 'don' && checkedPlayer && (
           <div
-            className={cx('investigation-result', state.donResult.isDetective ? 'danger' : 'safe')}
+            className={cx('investigation-result', checkedPlayer.role === 'detective' ? 'danger' : 'safe')}
             role="status"
           >
             <Crown aria-hidden="true" />
             <div>
               <span>Результат проверки</span>
               <strong>
-                {donCheckedPlayer.name}:{' '}
-                {state.donResult.isDetective ? 'это Комиссар' : 'не Комиссар'}
+                {checkedPlayer.name}:{' '}
+                {checkedPlayer.role === 'detective' ? 'это Комиссар' : 'не Комиссар'}
               </strong>
             </div>
           </div>
@@ -703,8 +747,8 @@ export function MafiaGame({
 
       {!state && (
         <Setup
-          onStart={(names, preset, seed) => {
-            dispatch({ type: 'START', names, preset, seed });
+          onStart={(names, preset, seed, customRoles) => {
+            dispatch({ type: 'START', names, preset, seed, customRoles });
             feedback(preferences, 'success');
           }}
         />

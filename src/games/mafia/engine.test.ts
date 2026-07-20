@@ -8,6 +8,7 @@ import {
   mafiaReducer,
   getNightSteps,
   resolveNight,
+  nightTargetKey,
   type MafiaGameState,
 } from './engine';
 
@@ -67,11 +68,11 @@ describe('Mafia engine', () => {
   it('gives the Don a distinct Commissioner search in noir mode', () => {
     let state = createMafiaGame(names(8), 'noir', 'DON-CHECK');
     state = { ...state, stage: 'night', nightStepIndex: 1 };
-    expect(getNightSteps(state).slice(0, 2)).toEqual(['mafia', 'don']);
+    expect(getNightSteps(state).slice(0, 2).map((step) => step.role)).toEqual(['mafia', 'don']);
     const detective = state.players.find((player) => player.role === 'detective')!;
     state = mafiaReducer(state, {
       type: 'SET_NIGHT_TARGET',
-      key: 'donTarget',
+      key: nightTargetKey(getNightSteps(state)[1]),
       playerId: detective.id,
     })!;
     expect(state.donResult).toEqual({ playerId: detective.id, isDetective: true });
@@ -176,6 +177,26 @@ describe('Mafia engine', () => {
     expect(state.stage).toBe('vote');
     expect(state.players[0].alive).toBe(true);
     expect(state.votes[nominated[0]]).toBe(3);
+  });
+
+  it('supports a custom deck with repeated active roles', () => {
+    const customRoles: MafiaRoleId[] = [
+      'mafia',
+      'doctor',
+      'doctor',
+      'detective',
+      'detective',
+      'maniac',
+      'civilian',
+      'civilian',
+    ];
+    const game = createMafiaGame(names(8), 'custom', 'CUSTOM', customRoles);
+    const steps = getNightSteps({ ...game, stage: 'night' });
+
+    expect(game.players.map((player) => player.role).sort()).toEqual([...customRoles].sort());
+    expect(steps.filter((step) => step.role === 'doctor')).toHaveLength(2);
+    expect(steps.filter((step) => step.role === 'detective')).toHaveLength(2);
+    expect(mafiaGameSchema.safeParse(game).success).toBe(true);
   });
 
   it('rejects actions that do not belong to the current phase', () => {

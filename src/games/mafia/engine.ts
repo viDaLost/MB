@@ -3,9 +3,13 @@ import { MAFIA_ROLES, type MafiaPreset, type MafiaRoleId, type MafiaTeam } from 
 import { createRng } from '../../lib/rng';
 
 export type MafiaStage = 'deal' | 'night' | 'dawn' | 'day' | 'vote' | 'ended';
-export type NightActionKey =
-  'mafiaTarget' | 'donTarget' | 'doctorTarget' | 'detectiveTarget' | 'maniacTarget';
-export type NightStep = 'mafia' | 'don' | 'doctor' | 'detective' | 'maniac';
+export type NightActionKey = string;
+export type NightRole = Exclude<MafiaRoleId, 'civilian'>;
+export interface NightStep {
+  id: NightActionKey;
+  role: NightRole;
+  actorId?: string;
+}
 
 export interface MafiaPlayer {
   id: string;
@@ -27,7 +31,7 @@ export interface MafiaCheckpoint {
   stage: MafiaStage;
   round: number;
   nightStepIndex: number;
-  nightActions: Partial<Record<NightActionKey, string>>;
+  nightActions: Record<NightActionKey, string>;
   detectiveResult?: { playerId: string; isMafia: boolean };
   donResult?: { playerId: string; isDetective: boolean };
   lastNightSummary: string[];
@@ -48,7 +52,7 @@ export interface MafiaGameState {
   dealIndex: number;
   cardVisible: boolean;
   nightStepIndex: number;
-  nightActions: Partial<Record<NightActionKey, string>>;
+  nightActions: Record<NightActionKey, string>;
   detectiveResult?: { playerId: string; isMafia: boolean };
   donResult?: { playerId: string; isDetective: boolean };
   lastNightSummary: string[];
@@ -80,13 +84,7 @@ const checkpointSchema = z.object({
   stage: z.enum(['deal', 'night', 'dawn', 'day', 'vote', 'ended']),
   round: z.number().int().positive(),
   nightStepIndex: z.number().int().nonnegative(),
-  nightActions: z.object({
-    mafiaTarget: z.string().optional(),
-    donTarget: z.string().optional(),
-    doctorTarget: z.string().optional(),
-    detectiveTarget: z.string().optional(),
-    maniacTarget: z.string().optional(),
-  }),
+  nightActions: z.record(z.string(), z.string()),
   detectiveResult: z.object({ playerId: z.string(), isMafia: z.boolean() }).optional(),
   donResult: z.object({ playerId: z.string(), isDetective: z.boolean() }).optional(),
   lastNightSummary: z.array(z.string()),
@@ -100,20 +98,14 @@ const checkpointSchema = z.object({
 export const mafiaGameSchema: z.ZodType<MafiaGameState> = z.object({
   version: z.literal(2),
   seed: z.string(),
-  preset: z.enum(['classic', 'noir', 'chaos']),
+  preset: z.enum(['classic', 'noir', 'chaos', 'custom']),
   stage: z.enum(['deal', 'night', 'dawn', 'day', 'vote', 'ended']),
   round: z.number().int().positive(),
-  players: z.array(playerSchema).min(5).max(16),
+  players: z.array(playerSchema).min(5).max(30),
   dealIndex: z.number().int().nonnegative(),
   cardVisible: z.boolean(),
   nightStepIndex: z.number().int().nonnegative(),
-  nightActions: z.object({
-    mafiaTarget: z.string().optional(),
-    donTarget: z.string().optional(),
-    doctorTarget: z.string().optional(),
-    detectiveTarget: z.string().optional(),
-    maniacTarget: z.string().optional(),
-  }),
+  nightActions: z.record(z.string(), z.string()),
   detectiveResult: z.object({ playerId: z.string(), isMafia: z.boolean() }).optional(),
   donResult: z.object({ playerId: z.string(), isDetective: z.boolean() }).optional(),
   lastNightSummary: z.array(z.string()),
@@ -125,7 +117,17 @@ export const mafiaGameSchema: z.ZodType<MafiaGameState> = z.object({
   checkpoint: checkpointSchema.optional(),
 });
 
-export function getRoleDeck(total: number, preset: MafiaPreset): MafiaRoleId[] {
+export function getRoleDeck(
+  total: number,
+  preset: MafiaPreset,
+  customRoles: MafiaRoleId[] = [],
+): MafiaRoleId[] {
+  if (preset === 'custom') {
+    const valid = customRoles.filter((role): role is MafiaRoleId => role in MAFIA_ROLES).slice(0, total);
+    while (valid.length < total) valid.push('civilian');
+    return valid;
+  }
+
   const mafiaSide = Math.max(1, Math.round(total / 4));
   const roles: MafiaRoleId[] = [];
   if (preset === 'noir' && total >= 8) {
@@ -147,11 +149,12 @@ export function createMafiaGame(
   names: string[],
   preset: MafiaPreset,
   seed: string,
+  customRoles: MafiaRoleId[] = [],
 ): MafiaGameState {
-  const boundedNames = names.slice(0, 16);
+  const boundedNames = names.slice(0, 30);
   while (boundedNames.length < 5) boundedNames.push(`Игрок ${boundedNames.length + 1}`);
   const cleanNames = boundedNames.map((name, index) => name.trim() || `Игрок ${index + 1}`);
-  const roles = createRng(seed).shuffle(getRoleDeck(cleanNames.length, preset));
+  const roles = createRng(seed).shuffle(getRoleDeck(cleanNames.length, preset, customRoles));
   const players = cleanNames.map((name, index) => {
     const role = roles[index];
     return {
@@ -203,30 +206,35 @@ function checkpoint(state: MafiaGameState): MafiaCheckpoint {
 }
 
 export function getNightSteps(state: MafiaGameState): NightStep[] {
-  const has = (role: MafiaRoleId) =>
-    state.players.some((player) => player.alive && player.role === role);
+  const alive = state.players.filter((player) => player.alive);
   const steps: NightStep[] = [];
-  if (state.players.some((player) => player.alive && player.team === 'mafia')) steps.push('mafia');
-  if (has('don')) steps.push('don');
-  if (has('doctor')) steps.push('doctor');
-  if (has('detective')) steps.push('detective');
-  if (has('maniac')) steps.push('maniac');
+
+  if (alive.some((player) => player.team === 'mafia')) {
+    steps.push({ id: 'mafia', role: 'mafia' });
+  }
+
+  const appendActors = (role: Exclude<NightRole, 'mafia'>) => {
+    alive
+      .filter((player) => player.role === role)
+      .forEach((player) => steps.push({ id: `${role}:${player.id}`, role, actorId: player.id }));
+  };
+
+  appendActors('don');
+  appendActors('doctor');
+  appendActors('detective');
+  appendActors('maniac');
   return steps;
 }
 
 export function nightTargetKey(step: NightStep): NightActionKey {
-  if (step === 'mafia') return 'mafiaTarget';
-  if (step === 'don') return 'donTarget';
-  if (step === 'doctor') return 'doctorTarget';
-  if (step === 'detective') return 'detectiveTarget';
-  return 'maniacTarget';
+  return step.id;
 }
 
 export function validTargets(state: MafiaGameState, step: NightStep) {
   return state.players.filter((player) => {
     if (!player.alive) return false;
-    if (step === 'mafia' || step === 'don') return player.team !== 'mafia';
-    if (step === 'maniac') return player.role !== 'maniac';
+    if (step.role === 'mafia' || step.role === 'don') return player.team !== 'mafia';
+    if (step.role === 'maniac') return player.id !== step.actorId;
     return true;
   });
 }
@@ -235,20 +243,28 @@ export function checkWinner(players: MafiaPlayer[]): MafiaTeam | undefined {
   const alive = players.filter((player) => player.alive);
   const mafia = alive.filter((player) => player.team === 'mafia').length;
   const maniac = alive.filter((player) => player.role === 'maniac').length;
-  if (maniac === 1 && alive.length === 1) return 'solo';
+  if (maniac > 0 && alive.length === maniac) return 'solo';
   if (mafia === 0 && maniac === 0) return 'city';
   if (mafia > 0 && mafia >= alive.length - mafia) return 'mafia';
   return undefined;
 }
 
 export function resolveNight(state: MafiaGameState): MafiaGameState {
-  const protectedId = state.nightActions.doctorTarget;
-  const attacked = new Set(
-    [state.nightActions.mafiaTarget, state.nightActions.maniacTarget].filter(
-      (value): value is string => Boolean(value),
-    ),
+  const protectedIds = new Set(
+    Object.entries(state.nightActions)
+      .filter(([key]) => key.startsWith('doctor:') || key === 'doctorTarget')
+      .map(([, playerId]) => playerId),
   );
-  if (protectedId) attacked.delete(protectedId);
+  const attackIds = [
+    state.nightActions.mafia ?? state.nightActions.mafiaTarget,
+    ...Object.entries(state.nightActions)
+      .filter(([key]) => key.startsWith('maniac:') || key === 'maniacTarget')
+      .map(([, playerId]) => playerId),
+  ].filter((value): value is string => Boolean(value));
+  const attacked = new Set(attackIds);
+  const prevented = [...attacked].filter((playerId) => protectedIds.has(playerId));
+  protectedIds.forEach((playerId) => attacked.delete(playerId));
+
   const nextPlayers = state.players.map((player) =>
     attacked.has(player.id) ? { ...player, alive: false } : player,
   );
@@ -256,12 +272,7 @@ export function resolveNight(state: MafiaGameState): MafiaGameState {
   const summary = victims.length
     ? victims.map((player) => `${player.name} не встретил рассвет.`)
     : ['Город проснулся без потерь.'];
-  if (
-    protectedId &&
-    [state.nightActions.mafiaTarget, state.nightActions.maniacTarget].includes(protectedId)
-  ) {
-    summary.push('Ночная атака была остановлена.');
-  }
+  if (prevented.length > 0) summary.push('Ночная атака была остановлена.');
   const winner = checkWinner(nextPlayers);
   return {
     ...state,
@@ -320,7 +331,7 @@ export function getVoteLeader(state: MafiaGameState) {
 }
 
 export type MafiaAction =
-  | { type: 'START'; names: string[]; preset: MafiaPreset; seed: string }
+  | { type: 'START'; names: string[]; preset: MafiaPreset; seed: string; customRoles?: MafiaRoleId[] }
   | { type: 'REVEAL_CARD' }
   | { type: 'HIDE_CARD' }
   | { type: 'NEXT_CARD' }
@@ -340,7 +351,8 @@ export function mafiaReducer(
   state: MafiaGameState | null,
   action: MafiaAction,
 ): MafiaGameState | null {
-  if (action.type === 'START') return createMafiaGame(action.names, action.preset, action.seed);
+  if (action.type === 'START')
+    return createMafiaGame(action.names, action.preset, action.seed, action.customRoles);
   if (action.type === 'RESET') return null;
   if (!state) return state;
   if (action.type === 'REVEAL_CARD')
@@ -370,21 +382,14 @@ export function mafiaReducer(
       !validTargets(state, step).some((player) => player.id === action.playerId)
     )
       return state;
+    const selectedPlayer = state.players.find((player) => player.id === action.playerId);
     const detectiveResult =
-      action.key === 'detectiveTarget'
-        ? {
-            playerId: action.playerId,
-            isMafia:
-              state.players.find((player) => player.id === action.playerId)?.team === 'mafia',
-          }
+      step.role === 'detective'
+        ? { playerId: action.playerId, isMafia: selectedPlayer?.team === 'mafia' }
         : state.detectiveResult;
     const donResult =
-      action.key === 'donTarget'
-        ? {
-            playerId: action.playerId,
-            isDetective:
-              state.players.find((player) => player.id === action.playerId)?.role === 'detective',
-          }
+      step.role === 'don'
+        ? { playerId: action.playerId, isDetective: selectedPlayer?.role === 'detective' }
         : state.donResult;
     return {
       ...state,
