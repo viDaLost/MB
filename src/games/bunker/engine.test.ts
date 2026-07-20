@@ -47,7 +47,7 @@ describe('Bunker engine', () => {
       expect(new Set(game.characters.map((character) => character.phobia)).size).toBe(16);
       expect(new Set(game.characters.map((character) => character.trait)).size).toBe(16);
       expect(new Set(game.characters.map((character) => character.inventory.name)).size).toBe(16);
-      expect(new Set(game.characters.map((character) => character.secret)).size).toBe(16);
+      expect(new Set(game.characters.map((character) => character.actionCard.id)).size).toBe(16);
       game.characters.forEach((character) => {
         expect(character.age).toBeGreaterThanOrEqual(character.profession.minAge);
         expect(healthMatches(character.health, character.age, character.sex)).toBe(true);

@@ -70,7 +70,7 @@ const FIELD_META: Record<RevealField, { label: string; icon: typeof Activity }> 
   phobia: { label: 'Фобия', icon: Brain },
   trait: { label: 'Черта', icon: Sparkles },
   inventory: { label: 'Предмет', icon: PackageOpen },
-  secret: { label: 'Секрет', icon: Eye },
+  ability: { label: 'Уникальная способность', icon: Sparkles },
 };
 
 const RESOURCE_ICONS: Record<ResourceKey, typeof Wind> = {
@@ -82,14 +82,18 @@ const RESOURCE_ICONS: Record<ResourceKey, typeof Wind> = {
 };
 
 function valueFor(character: BunkerCharacter, field: RevealField) {
-  if (field === 'profession')
-    return `${character.profession.title} — ${character.profession.description}`;
-  if (field === 'health') return `${character.health.name} — ${character.health.description}`;
+  if (field === 'profession') return character.profession.title;
+  if (field === 'health') return character.health.name;
   if (field === 'hobby') return character.hobby;
   if (field === 'phobia') return character.phobia;
   if (field === 'trait') return character.trait;
   if (field === 'inventory') return character.inventory.name;
-  return character.secret;
+  return character.actionCard.name;
+}
+
+function detailFor(character: BunkerCharacter, field: RevealField) {
+  if (field === 'ability') return character.actionCard.description;
+  return undefined;
 }
 
 function Setup({
@@ -115,32 +119,16 @@ function Setup({
   const duplicateNames = names
     .map((name) => name.trim().toLocaleLowerCase())
     .filter((name, index, all) => name && all.indexOf(name) !== index);
+
   return (
-    <main className="game-main setup-layout">
-      <section className="setup-hero bunker-panel">
-        <span className="eyebrow">Новая экспедиция</span>
-        <h1>
-          Кого закроет
-          <br />
-          гермодверь?
-        </h1>
-        <p>Сценарий, убежище и персонажи будут связаны единым кодом партии.</p>
-        <div className="setup-stats">
-          <div>
-            <strong>{count}</strong>
-            <span>кандидатов</span>
-          </div>
-          <div>
-            <strong>{capacity}</strong>
-            <span>мест</span>
-          </div>
-          <div>
-            <strong>{count - capacity}</strong>
-            <span>решений</span>
-          </div>
+    <main className="game-main setup-layout setup-layout--single">
+      <section className="setup-form bunker-panel minimal-setup">
+        <div className="minimal-setup__header">
+          <span className="eyebrow">Новая партия</span>
+          <h1>Бункер</h1>
+          <p>Укажите кандидатов, количество мест и стиль сценария.</p>
         </div>
-      </section>
-      <section className="setup-form bunker-panel">
+
         <div className="two-column-fields">
           <Stepper label="Участники" value={count} min={4} max={16} onChange={updateCount} />
           <Stepper
@@ -152,7 +140,7 @@ function Setup({
           />
         </div>
         <Segmented
-          label="Тон истории"
+          label="Стиль сценария"
           value={tone}
           options={(Object.keys(BUNKER_TONES) as BunkerTone[]).map((value) => ({
             value,
@@ -162,10 +150,11 @@ function Setup({
           onChange={setTone}
         />
         <p className="field-note">{BUNKER_TONES[tone].description}</p>
+
         <div className="field-stack">
           <div className="field-heading">
-            <span className="field-label">Кандидаты</span>
-            <small>18+; имена можно заменить</small>
+            <span className="field-label">Имена кандидатов</span>
+            <small>Можно оставить номера</small>
           </div>
           <div className="name-grid">
             {names.map((name, index) => (
@@ -190,6 +179,7 @@ function Setup({
             <p className="form-error">Имена кандидатов должны отличаться.</p>
           )}
         </div>
+
         <details className="advanced-settings">
           <summary>Код сценария</summary>
           <div className="seed-row">
@@ -206,13 +196,14 @@ function Setup({
             </IconButton>
           </div>
         </details>
+
         <Button
           variant="primary"
           block
           disabled={duplicateNames.length > 0 || !seed.trim()}
           onClick={() => onStart(names, capacity, tone, seed.trim())}
         >
-          Сгенерировать убежище
+          Создать сценарий
         </Button>
       </section>
     </main>
@@ -342,13 +333,14 @@ function PrivateField({
 }) {
   const meta = FIELD_META[field];
   const Icon = meta.icon;
-  const rerollable = ['profession', 'health', 'inventory', 'secret'].includes(field);
+  const rerollable = ['profession', 'health', 'inventory', 'ability'].includes(field);
   return (
-    <div className="private-field">
+    <div className={cx('private-field', field === 'ability' && 'private-field--ability')}>
       <Icon aria-hidden="true" />
       <div>
         <span>{meta.label}</span>
         <strong>{valueFor(character, field)}</strong>
+        {detailFor(character, field) && <small>{detailFor(character, field)}</small>}
       </div>
       {canReroll && rerollable && (
         <IconButton
@@ -415,17 +407,9 @@ function Deal({
               />
             ))}
           </div>
-          <div className="action-card-private">
-            <Sparkles aria-hidden="true" />
-            <div>
-              <span>Одноразовая карта</span>
-              <strong>{character.actionCard.name}</strong>
-              <p>{character.actionCard.description}</p>
-            </div>
-          </div>
           {character.rerollsRemaining > 0 && (
             <p className="field-note centered">
-              Можно заменить одно спорное свойство до передачи телефона.
+              Можно один раз заменить профессию, здоровье, предмет или способность.
             </p>
           )}
           <Button variant="primary" block onClick={() => dispatch({ type: 'NEXT_CARD' })}>
@@ -782,7 +766,13 @@ export function BunkerGame({
   };
 
   return (
-    <div className="game-page bunker-page">
+    <div
+      className={cx(
+        'game-page bunker-page',
+        state?.stage === 'deal' && 'bunker-page--deal',
+        state?.stage === 'deal' && state.cardVisible && 'bunker-page--dossier-open',
+      )}
+    >
       <GameHeader
         eyebrow={state ? `Раунд ${state.round} • кандидаты ${activeCount}` : 'Дебаты о выживании'}
         title="Последний бункер"
@@ -913,7 +903,7 @@ export function BunkerGame({
       </Modal>
       <Modal
         open={Boolean(privateCharacter)}
-        title="Личная карта кандидата"
+        title="Карточка персонажа"
         onClose={closePrivateCard}
       >
         {privateCharacter &&
@@ -922,7 +912,7 @@ export function BunkerGame({
               <EyeOff aria-hidden="true" />
               <span className="eyebrow">Передайте телефон</span>
               <h3>{privateCharacter.name}</h3>
-              <p>На экране будут все скрытые свойства и одноразовая карта.</p>
+              <p>На экране будет компактная карточка со всеми свойствами и уникальной способностью.</p>
               <HoldToReveal
                 haptics={preferences.haptics}
                 label="Удерживайте, чтобы проверить досье"
@@ -942,16 +932,6 @@ export function BunkerGame({
                   />
                 ))}
               </div>
-              <div className="action-card-private">
-                <Sparkles aria-hidden="true" />
-                <div>
-                  <span>
-                    {privateCharacter.actionUsed ? 'Карта уже использована' : 'Одноразовая карта'}
-                  </span>
-                  <strong>{privateCharacter.actionCard.name}</strong>
-                  <p>{privateCharacter.actionCard.description}</p>
-                </div>
-              </div>
               {!privateCharacter.actionUsed && (
                 <Button
                   variant="primary"
@@ -962,7 +942,7 @@ export function BunkerGame({
                     closePrivateCard();
                   }}
                 >
-                  Использовать карту и раскрыть эффект
+                  Использовать уникальную способность
                 </Button>
               )}
               <Button variant="ghost" block onClick={closePrivateCard}>

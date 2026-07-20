@@ -8,7 +8,6 @@ import {
   ITEMS,
   PHOBIAS,
   PROFESSIONS,
-  SECRETS,
   TRAITS,
   type ActionCardDefinition,
   type BunkerTone,
@@ -23,8 +22,8 @@ import { createRng } from '../../lib/rng';
 
 export type BunkerStage = 'scenario' | 'deal' | 'round' | 'vote' | 'crisis' | 'final';
 export type RevealField =
-  'profession' | 'health' | 'hobby' | 'phobia' | 'trait' | 'inventory' | 'secret';
-export type RerollField = 'profession' | 'health' | 'inventory' | 'secret';
+  'profession' | 'health' | 'hobby' | 'phobia' | 'trait' | 'inventory' | 'ability';
+export type RerollField = 'profession' | 'health' | 'inventory' | 'ability';
 export type CharacterSex = 'мужчина' | 'женщина' | 'небинарный человек';
 
 export interface BunkerCharacter {
@@ -38,7 +37,6 @@ export interface BunkerCharacter {
   phobia: string;
   trait: string;
   inventory: { name: string; tags: SurvivalTag[] };
-  secret: string;
   actionCard: ActionCardDefinition;
   active: boolean;
   revealed: RevealField[];
@@ -162,11 +160,10 @@ const characterSchema: z.ZodType<BunkerCharacter> = z.object({
   phobia: z.string(),
   trait: z.string(),
   inventory: z.object({ name: z.string(), tags: z.array(tags) }),
-  secret: z.string(),
   actionCard: actionSchema,
   active: z.boolean(),
   revealed: z.array(
-    z.enum(['profession', 'health', 'hobby', 'phobia', 'trait', 'inventory', 'secret']),
+    z.enum(['profession', 'health', 'hobby', 'phobia', 'trait', 'inventory', 'ability']),
   ),
   actionUsed: z.boolean(),
   shielded: z.boolean(),
@@ -264,17 +261,6 @@ export const bunkerGameSchema: z.ZodType<BunkerGameState> = z.object({
   checkpoint: checkpointSchema.optional(),
 });
 
-const GENERIC_SECRETS = [
-  'спрятал часть общего снаряжения до начала отбора',
-  'знает о техническом проходе за северной стеной',
-  'имеет профессиональный навык, о котором не указал в анкете',
-  'не умеет плавать и скрывает это',
-  'оставил снаружи человека, которому обещал вернуться',
-  'запомнил карту соседнего подземного объекта',
-  'слышал ночью механический шум из закрытого сектора',
-  'нашёл чужую персональную карту доступа',
-];
-
 const SHELTERS = [
   'Командный узел гражданской обороны',
   'Подземный исследовательский блок',
@@ -353,7 +339,7 @@ function generateCharacters(names: string[], tone: BunkerTone, seed: string): Bu
   const phobias = rng.shuffle(PHOBIAS);
   const traits = rng.shuffle(TRAITS);
   const items = rng.shuffle(ITEMS);
-  const secrets = rng.shuffle([...SECRETS[tone], ...GENERIC_SECRETS]);
+  const abilities = rng.shuffle(ACTION_CARDS);
   const sexes: CharacterSex[] = ['мужчина', 'женщина', 'небинарный человек'];
   const usedHealth = new Set<string>();
   return names.map((rawName, index) => {
@@ -375,8 +361,7 @@ function generateCharacters(names: string[], tone: BunkerTone, seed: string): Bu
       phobia: phobias[index % phobias.length],
       trait: traits[index % traits.length],
       inventory: items[index % items.length],
-      secret: secrets[index % secrets.length],
-      actionCard: rng.pick(ACTION_CARDS),
+      actionCard: abilities[index % abilities.length],
       active: true,
       revealed: [],
       actionUsed: false,
@@ -427,7 +412,7 @@ export function roundFields(round: number): RevealField[] {
   if (round === 1) return ['profession', 'health'];
   if (round === 2) return ['hobby', 'inventory'];
   if (round === 3) return ['trait', 'phobia'];
-  return ['secret'];
+  return ['ability'];
 }
 
 export function getActiveTags(state: BunkerGameState) {
@@ -494,12 +479,12 @@ function rerollCharacterField(state: BunkerGameState, characterId: string, field
         rerollsRemaining: character.rerollsRemaining - 1,
       };
     }
-    const pool = [...SECRETS[state.tone], ...GENERIC_SECRETS].filter(
-      (item) => item !== character.secret,
-    );
+    const pool = ACTION_CARDS.filter((item) => item.id !== character.actionCard.id);
     return {
       ...character,
-      secret: rng.pick(pool),
+      actionCard: rng.pick(pool),
+      actionUsed: false,
+      shielded: false,
       rerollsRemaining: character.rerollsRemaining - 1,
     };
   });
@@ -517,7 +502,18 @@ function activateActionCard(state: BunkerGameState, characterId: string) {
     if (item.actionCard.type === 'intel')
       return {
         ...item,
-        revealed: Array.from(new Set([...item.revealed, 'secret' as const])),
+        revealed: Array.from(
+          new Set<RevealField>([
+            ...item.revealed,
+            'profession',
+            'health',
+            'hobby',
+            'phobia',
+            'trait',
+            'inventory',
+            'ability',
+          ]),
+        ),
         actionUsed: true,
       };
     return { ...item, actionUsed: true };
@@ -534,7 +530,7 @@ function activateActionCard(state: BunkerGameState, characterId: string) {
     resources,
     history: [
       ...state.history,
-      log(state.round, `${character.name} использует карту «${character.actionCard.name}».`),
+      log(state.round, `${character.name} использует способность «${character.actionCard.name}».`),
     ],
   };
 }
