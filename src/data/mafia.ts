@@ -1,6 +1,6 @@
 export type MafiaRoleId = 'civilian' | 'mafia' | 'don' | 'detective' | 'doctor' | 'maniac';
 export type MafiaTeam = 'city' | 'mafia' | 'solo';
-export type MafiaPreset = 'classic' | 'noir' | 'chaos';
+export type MafiaPreset = 'classic' | 'noir' | 'chaos' | 'custom';
 
 export interface MafiaRoleDefinition {
   id: MafiaRoleId;
@@ -80,6 +80,11 @@ export const MAFIA_PRESETS: Record<
     name: 'Хаос',
     note: 'три стороны',
     description: 'Маньяк создаёт третью сторону и делает каждое голосование рискованнее.',
+  },
+  custom: {
+    name: 'Свой набор',
+    note: 'любые роли',
+    description: 'Вы сами задаёте количество каждой роли. Сумма ролей должна совпадать с числом игроков.',
   },
 };
 
