@@ -1,4 +1,4 @@
-import { Download, Radio, Settings2, ShieldCheck, Sparkles, Users, WifiOff } from 'lucide-react';
+import { Download, Settings2, ShieldCheck, Users, WifiOff } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Button, IconButton, Modal } from './components/ui';
 import { BUNKER_STORAGE_KEY, MAFIA_STORAGE_KEY } from './lib/sessionKeys';
@@ -165,76 +165,42 @@ export function App() {
         </div>
       </header>
 
-      <main className="home-main">
-        <section className="home-intro">
-          <span className="eyebrow">Игры ведущего • один телефон • офлайн</span>
-          <h1>
-            Две истории.
-            <br />
-            Один стол.
-          </h1>
-          <p>
-            Раздайте секреты, проведите раунды и доведите компанию до финала без бумажных заметок.
-          </p>
+      <main className="home-main home-main--minimal">
+        <section className="home-intro home-intro--minimal">
+          <span className="eyebrow">Игры для компании • один телефон</span>
+          <h1>Выберите игру</h1>
         </section>
 
-        <section className="game-portals" aria-label="Выбор игры">
+        <section className="game-portals game-portals--minimal" aria-label="Выбор игры">
           <article className="game-portal game-portal--mafia">
             <div className="portal-copy">
-              <span className="portal-number">01 / социальная дедукция</span>
-              <h2>
-                Ночной
-                <br />
-                город
-              </h2>
-              <p>Роли, ночь, расследование, голосование и автоматическая проверка победы.</p>
-              <div className="portal-tags">
-                <span>
-                  <Users aria-hidden="true" />
-                  5–16 игроков
-                </span>
-                <span>
-                  <Radio aria-hidden="true" />
-                  ведущий
-                </span>
-              </div>
+              <span className="portal-number">Социальная дедукция</span>
+              <h2>Мафия</h2>
+              <p>Роли, ночь, обсуждение и голосование.</p>
+              <span className="portal-meta">
+                <Users aria-hidden="true" /> 5–30 игроков
+              </span>
               <Button variant="primary" onClick={() => navigate('mafia')}>
-                {sessionFlags.mafia ? 'Продолжить «Мафию»' : 'Войти в город'}
+                {sessionFlags.mafia ? 'Продолжить мафию' : 'Начать мафию'}
               </Button>
             </div>
           </article>
 
           <article className="game-portal game-portal--bunker">
             <div className="portal-copy">
-              <span className="portal-number">02 / выживание и дебаты</span>
-              <h2>
-                Последний
-                <br />
-                бункер
-              </h2>
-              <p>Связный сценарий, поэтапные раскрытия, кризисы, голосования и финал выживших.</p>
-              <div className="portal-tags">
-                <span>
-                  <ShieldCheck aria-hidden="true" />
-                  4–16 игроков
-                </span>
-                <span>
-                  <Sparkles aria-hidden="true" />
-                  seed-партии
-                </span>
-              </div>
+              <span className="portal-number">Выживание и дебаты</span>
+              <h2>Бункер</h2>
+              <p>Персонажи, раскрытие характеристик и отбор.</p>
+              <span className="portal-meta">
+                <ShieldCheck aria-hidden="true" /> 4–16 игроков
+              </span>
               <Button variant="primary" onClick={() => navigate('bunker')}>
-                {sessionFlags.bunker ? 'Продолжить «Бункер»' : 'Открыть гермодверь'}
+                {sessionFlags.bunker ? 'Продолжить бункер' : 'Начать бункер'}
               </Button>
             </div>
           </article>
         </section>
       </main>
-
-      <footer className="home-footer">
-        <span>Работает без сети</span>
-        <span>Секреты остаются на устройстве</span>
-      </footer>
 
       <Modal
         open={settingsOpen}

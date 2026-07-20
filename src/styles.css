@@ -2696,3 +2696,504 @@ svg {
   scroll-behavior: auto !important;
   transition: none !important;
 }
+
+/* Minimal interface refresh */
+body::before,
+body::after {
+  display: none;
+}
+
+body {
+  background: #080a0d;
+}
+
+.home-page {
+  width: min(980px, 100%);
+}
+
+.home-main--minimal {
+  gap: 24px;
+  padding: clamp(54px, 10vh, 96px) 0 24px;
+}
+
+.home-intro--minimal {
+  max-width: none;
+  text-align: center;
+}
+
+.home-intro--minimal h1 {
+  margin: 12px 0 0;
+  font-family: inherit;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.game-portals--minimal {
+  gap: 14px;
+}
+
+.game-portals--minimal .game-portal {
+  min-height: 280px;
+  align-items: stretch;
+  padding: clamp(22px, 4vw, 34px);
+  background-image: none;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.game-portals--minimal .game-portal::before,
+.game-portals--minimal .game-portal::after {
+  display: none;
+}
+
+.game-portals--minimal .game-portal--mafia {
+  background: #121014;
+}
+
+.game-portals--minimal .game-portal--bunker {
+  background: #12130f;
+}
+
+.game-portals--minimal .portal-copy {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.game-portals--minimal .portal-copy h2,
+.game-portals--minimal .game-portal--bunker .portal-copy h2 {
+  margin: 22px 0 8px;
+  font-family: inherit;
+  font-size: clamp(2.3rem, 6vw, 4rem);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  text-transform: none;
+}
+
+.game-portals--minimal .portal-copy > p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.portal-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  margin-bottom: 16px;
+  color: #c9ccd1;
+  font-size: 0.82rem;
+}
+
+.portal-meta svg {
+  width: 17px;
+  height: 17px;
+}
+
+.game-portals--minimal .button {
+  min-width: 132px;
+}
+
+.game-page {
+  background: #080a0d;
+}
+
+.mafia-panel,
+.bunker-panel,
+.phase-card,
+.handoff-card,
+.secret-card,
+.ending-card {
+  box-shadow: none;
+}
+
+.mafia-panel {
+  background: #111014;
+}
+
+.bunker-panel {
+  background: #11130f;
+}
+
+.setup-layout--single {
+  display: block;
+  width: min(760px, 100%);
+}
+
+.minimal-setup {
+  display: grid;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: 22px;
+}
+
+.minimal-setup__header {
+  padding-bottom: 4px;
+}
+
+.minimal-setup__header h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(2.2rem, 7vw, 3.8rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.bunker-page .minimal-setup__header h1 {
+  text-transform: none;
+}
+
+.minimal-setup__header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.custom-role-editor {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.custom-role-editor__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.custom-role-editor__status span {
+  font-weight: 800;
+}
+
+.custom-role-editor__status small {
+  color: var(--muted);
+  text-align: right;
+}
+
+.custom-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.custom-role-grid .stepper {
+  min-width: 0;
+}
+
+.phase-card,
+.round-header,
+.crisis-card,
+.ending-card {
+  border-radius: 20px;
+}
+
+.phase-card {
+  padding: clamp(20px, 4vw, 32px);
+}
+
+.phase-card h1,
+.bunker-page .phase-card h1 {
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  line-height: 0.98;
+  text-transform: none;
+}
+
+.progress-rail {
+  opacity: 0.72;
+}
+
+/* Editable timer */
+.timer {
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 12px;
+  border-radius: 16px;
+}
+
+.timer > strong {
+  min-width: 92px;
+}
+
+.timer__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.timer__settings {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.timer__settings label {
+  display: grid;
+  gap: 4px;
+}
+
+.timer__settings label span {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timer__settings input {
+  width: 66px;
+  height: 40px;
+  padding: 0 9px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+}
+
+.timer__settings > span {
+  padding-bottom: 10px;
+  color: var(--muted);
+}
+
+.timer__settings .button {
+  min-height: 40px;
+  margin-left: auto;
+  padding: 8px 12px;
+}
+
+/* Bunker character card: one compact screen */
+.bunker-page--deal {
+  padding-bottom: calc(12px + var(--safe-bottom));
+}
+
+.bunker-page--dossier-open {
+  padding-bottom: var(--safe-bottom);
+}
+
+.bunker-page--dossier-open .session-tools {
+  display: none;
+}
+
+.bunker-reveal-layout {
+  width: min(720px, 100%);
+}
+
+.bunker-reveal-layout .progress-rail {
+  margin-bottom: 8px;
+}
+
+.bunker-reveal-layout .dossier-card {
+  display: flex;
+  max-height: calc(100dvh - 112px - var(--safe-top) - var(--safe-bottom));
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.bunker-reveal-layout .dossier-header {
+  flex: 0 0 auto;
+  padding-bottom: 9px;
+}
+
+.bunker-reveal-layout .dossier-header h1 {
+  margin: 3px 0;
+  font-size: clamp(1.65rem, 7vw, 2.6rem);
+  line-height: 1;
+}
+
+.bunker-reveal-layout .dossier-header p {
+  margin: 0;
+}
+
+.bunker-reveal-layout .private-fields,
+.private-review .private-fields {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.bunker-reveal-layout .private-field,
+.private-review .private-field {
+  min-width: 0;
+  min-height: 62px;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 7px;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.private-field--ability {
+  grid-column: 1 / -1;
+  min-height: 74px;
+  background: color-mix(in srgb, var(--accent) 8%, rgba(255, 255, 255, 0.03));
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.bunker-reveal-layout .private-field > svg,
+.private-review .private-field > svg {
+  width: 17px;
+  height: 17px;
+}
+
+.bunker-reveal-layout .private-field div,
+.private-review .private-field div {
+  min-width: 0;
+  gap: 2px;
+}
+
+.bunker-reveal-layout .private-field div span,
+.private-review .private-field div span {
+  font-size: 0.56rem;
+}
+
+.bunker-reveal-layout .private-field div strong,
+.private-review .private-field div strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: clamp(0.72rem, 2.7vw, 0.9rem);
+  line-height: 1.18;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.private-field div small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.bunker-reveal-layout .private-field .icon-button {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+}
+
+.bunker-reveal-layout .field-note {
+  margin: 0;
+  font-size: 0.68rem;
+}
+
+.bunker-reveal-layout > .dossier-card > .button {
+  min-height: 42px;
+  flex: 0 0 auto;
+}
+
+.public-facts small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+@media (max-width: 760px) {
+  .game-portals--minimal {
+    grid-template-columns: 1fr;
+  }
+
+  .game-portals--minimal .game-portal {
+    min-height: 230px;
+  }
+
+  .custom-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bunker-reveal-layout .private-fields,
+  .private-review .private-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .home-main--minimal {
+    padding-top: 42px;
+  }
+
+  .home-intro--minimal h1 {
+    font-size: clamp(2.4rem, 13vw, 3.5rem);
+  }
+
+  .minimal-setup {
+    padding: 17px;
+  }
+
+  .segmented {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bunker-reveal-layout .progress-rail small {
+    display: none;
+  }
+
+  .bunker-reveal-layout .dossier-card {
+    max-height: calc(100dvh - 104px - var(--safe-top) - var(--safe-bottom));
+    padding: 11px;
+    gap: 7px;
+  }
+
+  .bunker-reveal-layout .private-fields,
+  .private-review .private-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .bunker-reveal-layout .private-field,
+  .private-review .private-field {
+    min-height: 56px;
+    padding: 7px;
+  }
+
+  .private-field--ability {
+    min-height: 68px;
+  }
+
+  .bunker-reveal-layout .dossier-stamp {
+    padding: 6px 8px;
+    font-size: 0.65rem;
+  }
+
+  .timer__settings {
+    flex-wrap: wrap;
+  }
+
+  .timer__settings .button {
+    flex: 1;
+  }
+}
+
+@media (max-height: 700px) {
+  .bunker-reveal-layout .field-note {
+    display: none;
+  }
+
+  .bunker-reveal-layout .dossier-card {
+    gap: 6px;
+  }
+
+  .bunker-reveal-layout .private-field,
+  .private-review .private-field {
+    min-height: 52px;
+    padding: 6px;
+  }
+
+  .private-field--ability {
+    min-height: 62px;
+  }
+}

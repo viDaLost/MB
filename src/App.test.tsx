@@ -6,9 +6,9 @@ describe('application shell', () => {
   it('presents both games and accessible preferences', () => {
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: /Две истории/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Войти в город' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Открыть гермодверь' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Выберите игру/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Начать мафию' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Начать бункер' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Настройки' }));
     expect(screen.getByRole('dialog', { name: 'Настройки приложения' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Тактильный отклик/ })).toBeChecked();
@@ -19,6 +19,6 @@ describe('application shell', () => {
     render(<App />);
 
     expect(await screen.findByText('Количество игроков')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Соберите/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Мафия' })).toBeInTheDocument();
   });
 });
