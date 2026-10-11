@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import {
   ACTION_CARDS,
+  ABSURD_PROFESSIONS,
+  ABSURD_HOBBIES,
+  ABSURD_PHOBIAS,
+  ABSURD_TRAITS,
+  ABSURD_ITEMS,
   CRISES,
   DISASTERS,
   HEALTH,
@@ -365,12 +370,12 @@ function generateCharacters(names: string[], tone: BunkerTone, seed: string): Bu
   // Independent seeded decks avoid correlated card positions and keep shared codes reproducible.
   const deck = <T,>(category: string, items: readonly T[]) =>
     createRng(`${seed}:deck:${category}`).shuffle(items);
-  const professions = deck('professions', PROFESSIONS);
+  const professions = deck('professions', tone === 'absurd' ? ABSURD_PROFESSIONS : PROFESSIONS);
   const healthPool = deck('health', HEALTH);
-  const hobbies = deck('hobbies', HOBBIES);
-  const phobias = deck('phobias', PHOBIAS);
-  const traits = deck('traits', TRAITS);
-  const items = deck('items', ITEMS);
+  const hobbies = deck('hobbies', tone === 'absurd' ? ABSURD_HOBBIES : HOBBIES);
+  const phobias = deck('phobias', tone === 'absurd' ? ABSURD_PHOBIAS : PHOBIAS);
+  const traits = deck('traits', tone === 'absurd' ? ABSURD_TRAITS : TRAITS);
+  const items = deck('items', tone === 'absurd' ? ABSURD_ITEMS : ITEMS);
   const abilities = deck('abilities', ACTION_CARDS);
   const sexes: CharacterSex[] = ['мужчина', 'женщина'];
   const usedHealth = new Set<string>();
@@ -486,7 +491,7 @@ function rerollCharacterField(state: BunkerGameState, characterId: string, field
     if (character.id !== characterId) return character;
     if (field === 'profession') {
       const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.profession.id));
-      const pool = PROFESSIONS.filter((item) => item.minAge <= character.age && item.id !== character.profession.id);
+      const pool = (state.tone === 'absurd' ? ABSURD_PROFESSIONS : PROFESSIONS).filter((item) => item.minAge <= character.age && item.id !== character.profession.id);
       const fresh = pool.filter((item) => !used.has(item.id));
       return {
         ...character,
@@ -508,7 +513,7 @@ function rerollCharacterField(state: BunkerGameState, characterId: string, field
     }
     if (field === 'inventory') {
       const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.inventory.name));
-      const pool = ITEMS.filter((item) => item.name !== character.inventory.name);
+      const pool = (state.tone === 'absurd' ? ABSURD_ITEMS : ITEMS).filter((item) => item.name !== character.inventory.name);
       const fresh = pool.filter((item) => !used.has(item.name));
       return {
         ...character,
