@@ -96,6 +96,32 @@ function detailFor(character: BunkerCharacter, field: RevealField) {
   return undefined;
 }
 
+function loadBunkerSession() {
+  // Keep previous games playable when a legacy save contains an unsupported third value.
+  try {
+    const raw = localStorage.getItem(BUNKER_STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw) as {
+        characters?: BunkerCharacter[];
+        checkpoint?: { characters?: BunkerCharacter[] };
+      };
+      let changed = false;
+      for (const group of [saved.characters, saved.checkpoint?.characters]) {
+        group?.forEach((character, index) => {
+          if (character.sex !== 'мужчина' && character.sex !== 'женщина') {
+            character.sex = index % 2 === 0 ? 'мужчина' : 'женщина';
+            changed = true;
+          }
+        });
+      }
+      if (changed) localStorage.setItem(BUNKER_STORAGE_KEY, JSON.stringify(saved));
+    }
+  } catch {
+    // An inaccessible or malformed save is handled by loadStored.
+  }
+  return loadStored(BUNKER_STORAGE_KEY, bunkerGameSchema);
+}
+
 function Setup({
   onStart,
 }: {
@@ -540,7 +566,7 @@ function Round({
   );
 }
 
-function Voting({ state, dispatch }: { state: BunkerGameState; dispatch: Dispatch<BunkerAction> }) {
+function Voting({ state, dispatch, onBunkerInfo }: { state: BunkerGameState; dispatch: Dispatch<BunkerAction>; onBunkerInfo: () => void }) {
   const active = state.characters.filter((character) => character.active);
   const assignedVotes = Object.values(state.votes).reduce((sum, votes) => sum + votes, 0);
   return (
@@ -559,6 +585,9 @@ function Voting({ state, dispatch }: { state: BunkerGameState; dispatch: Dispatc
             </p>
           </div>
         </header>
+        <Button variant="ghost" block icon={<Archive />} onClick={onBunkerInfo}>
+          Информация о бункере и запасах
+        </Button>
         <div className="vote-budget">
           <span>Распределено голосов</span>
           <strong>
@@ -723,11 +752,12 @@ export function BunkerGame({
   preferences: GamePreferences;
 }) {
   const [state, dispatch] = useReducer(bunkerReducer, undefined, () =>
-    loadStored(BUNKER_STORAGE_KEY, bunkerGameSchema),
+    loadBunkerSession(),
   );
   const [resetOpen, setResetOpen] = useState(false);
   const [rosterOpen, setRosterOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [bunkerInfoOpen, setBunkerInfoOpen] = useState(false);
   const [showPrivate, setShowPrivate] = useState(false);
   const [privateCharacterId, setPrivateCharacterId] = useState<string | null>(null);
   const [privateVisible, setPrivateVisible] = useState(false);
@@ -817,10 +847,39 @@ export function BunkerGame({
           onPrivate={setPrivateCharacterId}
         />
       )}
-      {state?.stage === 'vote' && <Voting state={state} dispatch={dispatch} />}
+      {state?.stage === 'vote' && (
+        <Voting state={state} dispatch={dispatch} onBunkerInfo={() => setBunkerInfoOpen(true)} />
+      )}
       {state?.stage === 'crisis' && <Crisis state={state} dispatch={dispatch} />}
       {state?.stage === 'final' && <Final state={state} onReset={() => setResetOpen(true)} />}
 
+
+      <Modal open={bunkerInfoOpen && state?.stage === 'vote'} title="Информация о бункере" onClose={() => setBunkerInfoOpen(false)}>
+        {state && (
+          <div className="bunker-information">
+            <span className="eyebrow">Угроза снаружи</span>
+            <h3>{state.scenario.disaster.name}</h3>
+            <p>{state.scenario.disaster.description}</p>
+            <p>{state.scenario.disaster.surface}</p>
+            <span className="eyebrow">Убежище</span>
+            <h3>{state.scenario.shelter.name}</h3>
+            <dl className="bunker-information__metrics">
+              <div><dt>Мест</dt><dd>{state.scenario.capacity}</dd></div>
+              <div><dt>Площадь</dt><dd>{state.scenario.shelter.area} м²</dd></div>
+              <div><dt>Изоляция</dt><dd>{state.scenario.durationYears} лет</dd></div>
+              <div><dt>Целостность</dt><dd>{state.scenario.shelter.integrity}%</dd></div>
+            </dl>
+            <p className="bunker-information__warning"><ShieldAlert aria-hidden="true" />{state.scenario.shelter.limitation}</p>
+            <span className="field-label">Помещения</span>
+            <ul className="feature-list">{state.scenario.shelter.rooms.map((room) => <li key={room}>{room}</li>)}</ul>
+            <span className="field-label">Припасы</span>
+            <div className="supply-tags">{state.scenario.supplies.map((item) => <span key={item}>{item}</span>)}</div>
+            <span className="field-label">Текущие ресурсы</span>
+            <ResourceStrip state={state} />
+            <Button variant="primary" block onClick={() => setBunkerInfoOpen(false)}>Вернуться к голосованию</Button>
+          </div>
+        )}
+      </Modal>
       <Modal open={resetOpen} title="Создать новый сценарий?" onClose={() => setResetOpen(false)}>
         <p className="modal-copy">Текущий состав, ресурсы и журнал кризисов будут удалены.</p>
         <div className="sheet-actions">
