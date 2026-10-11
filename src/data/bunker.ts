@@ -29,7 +29,7 @@ export interface HealthDefinition {
   severity: 0 | 1 | 2;
   minAge?: number;
   maxAge?: number;
-  allowedSex?: Array<'мужчина' | 'женщина' | 'небинарный человек'>;
+  allowedSex?: Array<'мужчина' | 'женщина'>;
 }
 
 export interface CrisisDefinition {
@@ -68,8 +68,8 @@ export const BUNKER_TONES: Record<BunkerTone, { name: string; note: string; desc
     },
     absurd: {
       name: 'Абсурд',
-      note: 'чёрный юмор',
-      description: 'Странные детали и неожиданные способности без логических противоречий.',
+      note: 'лёгкий юмор',
+      description: 'Забавные катастрофы, необычные ситуации и неожиданные способности.',
     },
   };
 
@@ -155,6 +155,16 @@ export const DISASTERS: DisasterDefinition[] = [
     duration: [3, 6],
     hazards: ['food', 'security', 'social'],
   },
+  {"id":"ice-age","name":"Долгая ледяная зима","description":"Резкое ослабление океанических течений привело к многолетним холодам.","surface":"Поверхность покрыта снегом, транспортные пути занесены.","severity":3,"duration":[4,9],"hazards":["energy","food","navigation"],"tone":["realistic","cinematic"]},
+  {"id":"toxic-rains","name":"Кислотные ливни","description":"Серия промышленных аварий загрязнила атмосферу и водоёмы.","surface":"Вода снаружи требует многоступенчатой очистки.","severity":3,"duration":[2,6],"hazards":["medicine","science","food"],"tone":["realistic"]},
+  {"id":"blackout","name":"Длительное обесточивание","description":"Разрушение ключевых электросетей вызвало глобальный энергетический кризис.","surface":"Города живут без света, тепла и стабильной связи.","severity":3,"duration":[2,5],"hazards":["energy","engineering","social"],"tone":["realistic","cinematic"]},
+  {"id":"crop-failure","name":"Гибель урожая","description":"Болезнь культурных растений поразила основные продовольственные регионы.","surface":"Семена и чистая почва стали стратегическим ресурсом.","severity":4,"duration":[5,9],"hazards":["food","science","medicine"],"tone":["realistic"]},
+  {"id":"megaflood","name":"Великое наводнение","description":"Аномальные штормы и прорывы дамб затопили прибрежные города.","surface":"Здания уходят под воду, безопасные пути ограничены.","severity":4,"duration":[2,7],"hazards":["navigation","engineering","medicine"],"tone":["cinematic","realistic"]},
+  {"id":"meteor-swarm","name":"Метеоритный рой","description":"Земля прошла через плотный поток космических обломков.","surface":"На поверхности множество пожаров и повреждённых сооружений.","severity":5,"duration":[4,8],"hazards":["security","engineering","energy"],"tone":["cinematic"]},
+  {"id":"magnetic-anomaly","name":"Магнитная аномалия","description":"Необычные магнитные возмущения нарушили работу навигации и связи.","surface":"Компасам доверять нельзя, маршруты приходится проверять вручную.","severity":3,"duration":[3,6],"hazards":["navigation","science","engineering"],"tone":["cinematic"]},
+  {"id":"runaway-vines","name":"Наступление гигантских лиан","description":"Необычайно быстро растущие растения захватили дороги и электростанции.","surface":"Проходы зарастают за часы, но растения пригодны для исследований.","severity":2,"duration":[2,5],"hazards":["food","science","engineering"],"tone":["absurd"]},
+  {"id":"robot-parade","name":"Бунт роботов-уборщиков","description":"Роботы-уборщики объявили мегаполисы зоной генеральной уборки.","surface":"Все дороги перекрыты машинами, требующими соблюдать чистоту.","severity":2,"duration":[2,4],"hazards":["engineering","social","navigation"],"tone":["absurd"]},
+  {"id":"echo-storm","name":"Шторм эха","description":"Аномальные звуковые волны повторяют любые произнесённые слова на километры.","surface":"Снаружи каждый разговор превращается в громкое эхо.","severity":2,"duration":[2,5],"hazards":["science","social","security"],"tone":["absurd"]},
 ];
 
 export const PROFESSIONS: ProfessionDefinition[] = [
@@ -284,6 +294,28 @@ export const PROFESSIONS: ProfessionDefinition[] = [
     tags: ['navigation', 'science'],
     minAge: 22,
   },
+  {"id":"nurse","title":"Медицинская сестра","description":"Организует уход, перевязки и контроль состояния людей.","tags":["medicine","social"],"minAge":20},
+  {"id":"hydrologist","title":"Гидролог","description":"Находит источники воды и рассчитывает очистку.","tags":["science","food"],"minAge":23},
+  {"id":"veterinarian","title":"Ветеринар","description":"Лечит животных и предупреждает инфекции.","tags":["medicine","science"],"minAge":24},
+  {"id":"translator","title":"Переводчик","description":"Налаживает связь с группами из разных регионов.","tags":["social","navigation"],"minAge":20},
+  {"id":"welder","title":"Сварщик","description":"Ремонтирует металлические конструкции и гермодвери.","tags":["engineering","security"],"minAge":20},
+  {"id":"plumber","title":"Сантехник","description":"Восстанавливает водопровод и канализацию.","tags":["engineering","medicine"],"minAge":20},
+  {"id":"botanist","title":"Ботаник","description":"Подбирает съедобные растения для теплиц.","tags":["science","food"],"minAge":23},
+  {"id":"geologist","title":"Геолог","description":"Исследует грунт и безопасность подземных конструкций.","tags":["science","navigation"],"minAge":23},
+  {"id":"archivist","title":"Архивист","description":"Сохраняет документы, карты и инструкции.","tags":["social","science"],"minAge":21},
+  {"id":"tailor","title":"Портной","description":"Изготавливает и чинит защитную одежду.","tags":["engineering","social"],"minAge":18},
+  {"id":"carpenter","title":"Столяр","description":"Создаёт мебель, ящики и деревянные перегородки.","tags":["engineering","food"],"minAge":20},
+  {"id":"meteorologist","title":"Метеоролог","description":"Предсказывает погодные окна для вылазок.","tags":["science","navigation"],"minAge":23},
+  {"id":"firefighter","title":"Пожарный","description":"Организует пожарную безопасность и спасательные работы.","tags":["security","medicine"],"minAge":21},
+  {"id":"nutritionist","title":"Диетолог","description":"Составляет полноценный рацион из ограниченных запасов.","tags":["food","medicine"],"minAge":24},
+  {"id":"software","title":"Программист встроенных систем","description":"Восстанавливает автоматику и контроллеры.","tags":["engineering","energy"],"minAge":21},
+  {"id":"physicist","title":"Физик","description":"Оценивает опасные излучения и работу оборудования.","tags":["science","energy"],"minAge":23},
+  {"id":"drone-operator","title":"Оператор дронов","description":"Исследует поверхность без риска для группы.","tags":["navigation","security"],"minAge":20},
+  {"id":"sociologist","title":"Социолог","description":"Помогает организовать справедливые правила сообщества.","tags":["social","science"],"minAge":22},
+  {"id":"machinist","title":"Токарь","description":"Изготавливает детали для изношенных механизмов.","tags":["engineering","energy"],"minAge":20},
+  {"id":"pharmacist","title":"Фармацевт","description":"Следит за запасом и совместимостью лекарств.","tags":["medicine","science"],"minAge":22},
+  {"id":"gardener","title":"Садовод","description":"Разводит зелень и поддерживает теплицы.","tags":["food","social"],"minAge":18},
+  {"id":"surveyor","title":"Геодезист","description":"Размечает новые тоннели и маршруты.","tags":["navigation","engineering"],"minAge":21},
 ];
 
 export const HEALTH: HealthDefinition[] = [
@@ -396,6 +428,26 @@ export const HEALTH: HealthDefinition[] = [
     description: 'Нужен рацион без обычных молочных продуктов.',
     severity: 0,
   },
+  {"id":"fit","name":"Отличная физическая форма","description":"Хорошо переносит долгие смены и умеренные нагрузки.","severity":0},
+  {"id":"glasses","name":"Нужны очки для чтения","description":"В остальном работоспособность не ограничена.","severity":0},
+  {"id":"pollen","name":"Сезонная аллергия","description":"В период цветения нужны препараты и фильтры.","severity":1},
+  {"id":"sprain","name":"Растяжение голеностопа","description":"Восстанавливается после травмы, временно хромает.","severity":1},
+  {"id":"back","name":"Боль в спине","description":"Тяжёлые грузы лучше переносить вдвоём.","severity":1},
+  {"id":"sleep","name":"Лёгкие нарушения сна","description":"Нужен устойчивый график отдыха.","severity":1},
+  {"id":"color","name":"Дальтонизм","description":"Цветные индикаторы нужно подписывать текстом.","severity":0},
+  {"id":"motion","name":"Укачивание","description":"Плохо переносит транспорт, внутри убежища ограничений нет.","severity":0},
+  {"id":"skin","name":"Чувствительная кожа","description":"При работе с химикатами нужны защитные перчатки.","severity":0},
+  {"id":"stamina","name":"Быстрая утомляемость","description":"Нужны короткие перерывы во время физической работы.","severity":1},
+  {"id":"recovered-pneumonia","name":"Восстановление после пневмонии","description":"Нагрузка должна нарастать постепенно.","severity":1},
+  {"id":"dental","name":"Нуждается в лечении зуба","description":"Требуется стоматологическая помощь при возможности.","severity":1},
+  {"id":"dry-eyes","name":"Синдром сухого глаза","description":"Нужны увлажняющие капли при долгой работе за экраном.","severity":0},
+  {"id":"joint","name":"Повышенная гибкость суставов","description":"Нужно осторожно работать с тяжёлым грузом.","severity":0},
+  {"id":"cold","name":"Плохо переносит холод","description":"Для вылазок нужна дополнительная тёплая одежда.","severity":0},
+  {"id":"dust","name":"Чувствительность к пыли","description":"Помогают исправная вентиляция и респиратор.","severity":1},
+  {"id":"scar","name":"Старая травма плеча","description":"Ограничена длительная работа руками над головой.","severity":1},
+  {"id":"healed","name":"Полностью восстановился после операции","description":"Специальных ограничений сейчас нет.","severity":0},
+  {"id":"balance","name":"Нарушение равновесия","description":"На узких лестницах нужна дополнительная опора.","severity":1},
+  {"id":"controlled-eczema","name":"Контролируемая экзема","description":"Нужны уход за кожей и подходящие перчатки.","severity":1},
 ];
 
 export const PHOBIAS = [
@@ -415,6 +467,28 @@ export const PHOBIAS = [
   'страх громких сирен',
   'боязнь толпы',
   'страх медицинских игл',
+  "страх резких перепадов давления",
+  "страх глубоких тоннелей",
+  "боязнь оставаться без связи",
+  "страх электрических разрядов",
+  "боязнь сильного ветра",
+  "страх тумана",
+  "боязнь грязной воды",
+  "страх ночных вылазок",
+  "боязнь роботизированных механизмов",
+  "страх подземных толчков",
+  "боязнь открытых люков",
+  "страх грохота генератора",
+  "боязнь резких запахов",
+  "страх повреждения оборудования",
+  "боязнь больших пустых залов",
+  "страх неизвестных растений",
+  "боязнь мороза",
+  "страх замереть в лифте",
+  "боязнь потеряться",
+  "страх отключения света",
+  "боязнь птиц",
+  "страх грозы",
 ];
 
 export const TRAITS = [
@@ -434,6 +508,28 @@ export const TRAITS = [
   'защищает слабых',
   'подозрителен к незнакомцам',
   'терпеливо обучает других',
+  "всегда записывает важные детали",
+  "умеет находить компромиссы",
+  "любит экспериментировать",
+  "разговаривает слишком быстро",
+  "обдумывает каждый риск",
+  "отличается удивительным терпением",
+  "любит делиться знаниями",
+  "сначала проверяет факты",
+  "поддерживает порядок в команде",
+  "слишком оптимистичен",
+  "не теряется в темноте",
+  "бережёт чужое время",
+  "может долго работать в одиночестве",
+  "изобретателен с подручными средствами",
+  "не любит менять план",
+  "охотно берётся за сложные задачи",
+  "сохраняет спокойствие при тревоге",
+  "быстро замечает усталость других",
+  "любит составлять списки",
+  "не боится признать незнание",
+  "испытывает азарт от загадок",
+  "предпочитает действовать сообща",
 ];
 
 export const HOBBIES = [
@@ -453,6 +549,28 @@ export const HOBBIES = [
   '3D-моделирование',
   'рыбалка',
   'изучение языков',
+  "сборка моделей самолётов",
+  "вышивание",
+  "ботанические зарисовки",
+  "наблюдение за звёздами",
+  "починка велосипедов",
+  "изготовление свечей",
+  "настольный теннис",
+  "обучение азбуке Морзе",
+  "выпечка хлеба",
+  "плетение корзин",
+  "коллекционирование минералов",
+  "изучение метеорологии",
+  "игра в шахматы",
+  "сборка радиоприёмников",
+  "каллиграфия",
+  "создание бумажных карт",
+  "плавание",
+  "создание миниатюр",
+  "резьба по дереву",
+  "фотография",
+  "разведение комнатных растений",
+  "изучение птиц",
 ];
 
 export const ITEMS: Array<{ name: string; tags: SurvivalTag[] }> = [
@@ -474,6 +592,28 @@ export const ITEMS: Array<{ name: string; tags: SurvivalTag[] }> = [
   { name: 'семейный фотоальбом', tags: ['social'] },
   { name: 'комплект настольных игр', tags: ['social'] },
   { name: 'мультитул и точильный камень', tags: ['engineering'] },
+  {"name":"карманный микроскоп","tags":["science","medicine"]},
+  {"name":"набор сменных предохранителей","tags":["energy","engineering"]},
+  {"name":"складной гидропонный лоток","tags":["food"]},
+  {"name":"руководство по ремонту насосов","tags":["engineering"]},
+  {"name":"аналоговый барометр","tags":["navigation","science"]},
+  {"name":"запас туристических фонарей","tags":["energy","security"]},
+  {"name":"герметичные контейнеры","tags":["food"]},
+  {"name":"комплект ручных раций","tags":["navigation","social"]},
+  {"name":"набор стерильных повязок","tags":["medicine"]},
+  {"name":"комплект швейных принадлежностей","tags":["social"]},
+  {"name":"набор геологических проб","tags":["science"]},
+  {"name":"теплоизоляционная плёнка","tags":["engineering","energy"]},
+  {"name":"полевая метеостанция","tags":["science","navigation"]},
+  {"name":"складной фильтр тонкой очистки","tags":["medicine","food"]},
+  {"name":"мобильная библиотека на карте памяти","tags":["social","science"]},
+  {"name":"гидравлический домкрат","tags":["engineering","security"]},
+  {"name":"ящик сушёных фруктов","tags":["food","social"]},
+  {"name":"карманный проектор","tags":["social","energy"]},
+  {"name":"механические часы с будильником","tags":["social"]},
+  {"name":"набор для ремонта одежды","tags":["engineering"]},
+  {"name":"катушка оптоволоконного кабеля","tags":["engineering","navigation"]},
+  {"name":"комплект запасных прокладок","tags":["engineering","medicine"]},
 ];
 
 export const ACTION_CARDS: ActionCardDefinition[] = [
@@ -599,6 +739,18 @@ export const ACTION_CARDS: ActionCardDefinition[] = [
     resource: 'water',
     amount: 12,
   },
+  {"id":"air-service","name":"Сервис вентиляции","description":"Добавляет 12 единиц воздуха после обслуживания системы.","type":"supply","resource":"air","amount":12},
+  {"id":"rain-cache","name":"Аварийный сбор воды","description":"Добавляет 14 единиц воды благодаря резервным ёмкостям.","type":"supply","resource":"water","amount":14},
+  {"id":"plant-shelf","name":"Выращенная зелень","description":"Добавляет 12 единиц еды благодаря мини-теплице.","type":"supply","resource":"food","amount":12},
+  {"id":"battery-repair","name":"Ремонт батарей","description":"Добавляет 14 единиц энергии после восстановления накопителя.","type":"supply","resource":"energy","amount":14},
+  {"id":"concert","name":"Концерт для команды","description":"Добавляет 14 единиц морали общему составу.","type":"supply","resource":"morale","amount":14},
+  {"id":"extra-ration","name":"Спрятанный паёк","description":"Добавляет 8 единиц еды.","type":"supply","resource":"food","amount":8},
+  {"id":"second-filter","name":"Запас сменных мембран","description":"Добавляет 8 единиц воздуха.","type":"supply","resource":"air","amount":8},
+  {"id":"instructor","name":"Обучение команды","description":"Добавляет 9 единиц морали.","type":"supply","resource":"morale","amount":9},
+  {"id":"backup-generator","name":"Аварийная динамо-машина","description":"Добавляет 9 единиц энергии.","type":"supply","resource":"energy","amount":9},
+  {"id":"clean-well","name":"Найденный колодец","description":"Добавляет 9 единиц воды.","type":"supply","resource":"water","amount":9},
+  {"id":"legal-appeal","name":"Право на пересмотр","description":"Один раз сохраните место после голосования.","type":"shield"},
+  {"id":"shared-intel","name":"Открытые аргументы","description":"Раскройте своё досье группе для обсуждения.","type":"intel"},
 ];
 
 export const CRISES: CrisisDefinition[] = [
@@ -707,6 +859,14 @@ export const CRISES: CrisisDefinition[] = [
       },
     ],
   },
+  {"id":"fungus","title":"Плесень в теплице","description":"На посадках появились неизвестные пятна.","options":[{"title":"Изолировать растения","text":"Проверить возбудителя и спасти здоровую рассаду.","required":["science","food"],"cost":{"food":5},"reward":{"food":15}},{"title":"Сменить субстрат","text":"Удалить заражённые грядки и начать заново.","required":["engineering"],"cost":{"energy":7,"food":8},"reward":{"morale":6}}]},
+  {"id":"leak","title":"Течь в тоннеле","description":"В боковом коридоре появилась вода.","options":[{"title":"Загерметизировать шов","text":"Устранить протечку без остановки станции.","required":["engineering","security"],"cost":{"energy":6},"reward":{"water":10}},{"title":"Закрыть отсек","text":"Изолировать коридор и выиграть время.","required":["social"],"cost":{"morale":7},"reward":{"energy":5}}]},
+  {"id":"unknown-drone","title":"Дрон у входа","description":"Камера замечает неизвестный аппарат.","options":[{"title":"Исследовать сигнал","text":"Выяснить назначение дрона и записать данные.","required":["navigation","science"],"cost":{"energy":8},"reward":{"morale":13}},{"title":"Выключить маяки","text":"Остаться незамеченными и сохранить ресурсы.","required":["security"],"cost":{"morale":4},"reward":{"energy":9}}]},
+  {"id":"cold-storage","title":"Холод на складе","description":"Система поддержания температуры склада перестала работать.","options":[{"title":"Починить охлаждение","text":"Восстановить питание до порчи продуктов.","required":["energy","engineering"],"cost":{"energy":8},"reward":{"food":16}},{"title":"Переработать запасы","text":"Приготовить продукты и сократить потери.","required":["food"],"cost":{"energy":4},"reward":{"food":9}}]},
+  {"id":"alarm","title":"Ложная тревога","description":"Сирена сработала ночью, хотя датчики спокойны.","options":[{"title":"Проверить сеть","text":"Найти ошибочный контакт в цепи сигнализации.","required":["engineering","science"],"cost":{"energy":5},"reward":{"morale":13}},{"title":"Провести инструктаж","text":"Успокоить людей и распределить дежурства.","required":["social","security"],"cost":{"food":4},"reward":{"morale":9}}]},
+  {"id":"message","title":"Записка в вентиляции","description":"В старом воздуховоде нашлась карта незнакомых туннелей.","options":[{"title":"Проверить тоннели","text":"Отправить разведку и найти полезные запасы.","required":["navigation","security"],"cost":{"energy":10},"reward":{"food":14}},{"title":"Изучить архив","text":"Сопоставить карту с инженерной документацией.","required":["science"],"cost":{"energy":5},"reward":{"morale":11}}]},
+  {"id":"crop-light","title":"Сбой освещения","description":"Тепличные лампы мигают и грозят сорвать урожай.","options":[{"title":"Переподключить питание","text":"Перекинуть нагрузку на резервную шину.","required":["energy","engineering"],"cost":{"energy":9},"reward":{"food":15}},{"title":"Сберечь ростки","text":"Перенести растения под доступные источники света.","required":["food","science"],"cost":{"morale":5},"reward":{"food":9}}]},
+  {"id":"water-line","title":"Необычный шум в трубах","description":"Водопровод начал вибрировать после ночного обслуживания.","options":[{"title":"Настроить насос","text":"Устранить гидроудары и повысить напор.","required":["engineering"],"cost":{"energy":7},"reward":{"water":15}},{"title":"Открыть резерв","text":"Снизить давление и перераспределить запас.","required":["food","social"],"cost":{"water":6},"reward":{"morale":10}}]},
 ];
 
 export const RESOURCE_LABELS: Record<ResourceKey, string> = {

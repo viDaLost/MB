@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTION_CARDS, type HealthDefinition } from '../../data/bunker';
+import { ACTION_CARDS, DISASTERS, HEALTH, HOBBIES, ITEMS, PHOBIAS, PROFESSIONS, TRAITS, CRISES, type HealthDefinition } from '../../data/bunker';
 import {
   bunkerGameSchema,
   bunkerReducer,
@@ -36,6 +36,29 @@ function startVote(game: BunkerGameState): BunkerGameState {
 }
 
 describe('Bunker engine', () => {
+  it('deals only male and female cards, and varies independent categories by seed', () => {
+    const first = createBunkerGame(names(16), 8, 'cinematic', 'DECK-1');
+    const repeated = createBunkerGame(names(16), 8, 'cinematic', 'DECK-1');
+    const different = createBunkerGame(names(16), 8, 'cinematic', 'DECK-2');
+    expect(first.characters).toEqual(repeated.characters);
+    expect(first.characters.every((person) => person.sex === 'мужчина' || person.sex === 'женщина')).toBe(true);
+    expect(first.characters.map((person) => person.profession.id)).not.toEqual(different.characters.map((person) => person.profession.id));
+    expect(first.characters.map((person) => person.hobby)).not.toEqual(different.characters.map((person) => person.hobby));
+    const invalid = structuredClone(first);
+    (invalid.characters[0] as unknown as {sex: string}).sex = 'другой';
+    expect(bunkerGameSchema.safeParse(invalid).success).toBe(false);
+  });
+  it('includes significantly expanded family-friendly content pools', () => {
+    expect(DISASTERS.length).toBeGreaterThanOrEqual(18);
+    expect(PROFESSIONS.length).toBeGreaterThanOrEqual(35);
+    expect(HEALTH.length).toBeGreaterThanOrEqual(35);
+    expect(HOBBIES.length).toBeGreaterThanOrEqual(35);
+    expect(PHOBIAS.length).toBeGreaterThanOrEqual(35);
+    expect(TRAITS.length).toBeGreaterThanOrEqual(35);
+    expect(ITEMS.length).toBeGreaterThanOrEqual(35);
+    expect(ACTION_CARDS.length).toBeGreaterThanOrEqual(25);
+    expect(CRISES.length).toBeGreaterThanOrEqual(12);
+  });
   it('keeps demographic and scenario constraints valid across a seed matrix', () => {
     const tones = ['realistic', 'cinematic', 'absurd'] as const;
     for (let index = 0; index < 90; index += 1) {

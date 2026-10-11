@@ -3197,3 +3197,16 @@ body {
     min-height: 62px;
   }
 }
+
+/* Compact shelter briefing, available without leaving the voting screen. */
+.bunker-information { display: grid; gap: 12px; }
+.bunker-information h3 { margin: 0; font-size: 1.15rem; }
+.bunker-information p { margin: 0; line-height: 1.55; }
+.bunker-information__metrics { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin: 0; }
+.bunker-information__metrics div { padding: 12px; background: rgba(255,255,255,.05); border-radius: var(--radius-sm); }
+.bunker-information__metrics dt { font-size: .75rem; color: var(--muted); }
+.bunker-information__metrics dd { margin: 6px 0 0; font-size: 1.1rem; font-weight: 800; }
+.bunker-information__warning { display: flex; align-items: start; gap: 8px; }
+.bunker-information__warning svg { flex: 0 0 20px; }
+.bunker-information .resource-strip { margin: 0 0 8px; }
+.bunker-page .phase-card > .btn:has(+ .vote-budget) { margin: 0 0 14px; }

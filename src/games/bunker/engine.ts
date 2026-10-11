@@ -24,7 +24,7 @@ export type BunkerStage = 'scenario' | 'deal' | 'round' | 'vote' | 'crisis' | 'f
 export type RevealField =
   'profession' | 'health' | 'hobby' | 'phobia' | 'trait' | 'inventory' | 'ability';
 export type RerollField = 'profession' | 'health' | 'inventory' | 'ability';
-export type CharacterSex = 'мужчина' | 'женщина' | 'небинарный человек';
+export type CharacterSex = 'мужчина' | 'женщина';
 
 export interface BunkerCharacter {
   id: string;
@@ -139,7 +139,7 @@ const healthSchema = z.object({
   severity: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   minAge: z.number().optional(),
   maxAge: z.number().optional(),
-  allowedSex: z.array(z.enum(['мужчина', 'женщина', 'небинарный человек'])).optional(),
+  allowedSex: z.array(z.enum(['мужчина', 'женщина'])).optional(),
 });
 const actionSchema = z.object({
   id: z.string(),
@@ -153,7 +153,7 @@ const characterSchema: z.ZodType<BunkerCharacter> = z.object({
   id: z.string(),
   name: z.string(),
   age: z.number().int().min(18).max(80),
-  sex: z.enum(['мужчина', 'женщина', 'небинарный человек']),
+  sex: z.enum(['мужчина', 'женщина']),
   profession: professionSchema,
   health: healthSchema,
   hobby: z.string(),
@@ -267,6 +267,16 @@ const SHELTERS = [
   'Конверсионное военное убежище',
   'Автономный транспортный модуль',
   'Глубинная сервисная станция',
+  "Архивный подземный комплекс",
+  "Технический отсек метро",
+  "Станция под горным массивом",
+  "Защищённый научный архив",
+  "Подземный узел связи",
+  "Резервный центр управления",
+  "Убежище под гидроэлектростанцией",
+  "Глубокая горная лаборатория",
+  "Законсервированный музейный фонд",
+  "Складской бункер городской службы",
 ];
 const ROOMS = [
   'медицинский отсек',
@@ -279,6 +289,16 @@ const ROOMS = [
   'карантинная',
   'комната отдыха',
   'наблюдательный пост',
+  "пункт сортировки воды",
+  "комната картографии",
+  "тренировочный зал",
+  "ремонтный цех",
+  "библиотека",
+  "блок хранения семян",
+  "комната управления фильтрами",
+  "тёплый шлюз",
+  "комната диагностики",
+  "мини-теплица",
 ];
 const LIMITATIONS = [
   'Один внешний шлюз заблокирован обломками.',
@@ -286,6 +306,16 @@ const LIMITATIONS = [
   'Резервный генератор нельзя запускать дольше шести часов подряд.',
   'Часть склада находится за неисправной гермодверью.',
   'Связь работает только короткими сеансами.',
+  "Главный резервуар нуждается в частой проверке.",
+  "Склад продуктов расположен далеко от жилого блока.",
+  "Запасные фильтры хранятся в труднодоступном отсеке.",
+  "На одном уровне нарушена связь между датчиками.",
+  "Теплица работает только при пониженном освещении.",
+  "Вторая гермодверь открывается лишь вручную.",
+  "Часть инструментов требует ремонта.",
+  "Один из входов занесён землёй.",
+  "Радиоантенну приходится выводить только ночью.",
+  "В мастерской действует ограничение на потребление энергии.",
 ];
 
 function log(round: number, text: string): BunkerLogEntry {
@@ -332,23 +362,26 @@ export function generateScenario(
 }
 
 function generateCharacters(names: string[], tone: BunkerTone, seed: string): BunkerCharacter[] {
-  const rng = createRng(`${seed}:characters`);
-  const professions = rng.shuffle(PROFESSIONS);
-  const healthPool = rng.shuffle(HEALTH);
-  const hobbies = rng.shuffle(HOBBIES);
-  const phobias = rng.shuffle(PHOBIAS);
-  const traits = rng.shuffle(TRAITS);
-  const items = rng.shuffle(ITEMS);
-  const abilities = rng.shuffle(ACTION_CARDS);
-  const sexes: CharacterSex[] = ['мужчина', 'женщина', 'небинарный человек'];
+  // Independent seeded decks avoid correlated card positions and keep shared codes reproducible.
+  const deck = <T,>(category: string, items: readonly T[]) =>
+    createRng(`${seed}:deck:${category}`).shuffle(items);
+  const professions = deck('professions', PROFESSIONS);
+  const healthPool = deck('health', HEALTH);
+  const hobbies = deck('hobbies', HOBBIES);
+  const phobias = deck('phobias', PHOBIAS);
+  const traits = deck('traits', TRAITS);
+  const items = deck('items', ITEMS);
+  const abilities = deck('abilities', ACTION_CARDS);
+  const sexes: CharacterSex[] = ['мужчина', 'женщина'];
   const usedHealth = new Set<string>();
   return names.map((rawName, index) => {
+    const rng = createRng(`${seed}:character:${index}:${rawName}`);
     const profession = professions[index % professions.length];
     const sex = rng.pick(sexes);
     const age = rng.int(Math.max(18, profession.minAge), 74);
     const compatibleHealth = healthPool.filter((item) => matchesHealth(item, age, sex));
-    const health =
-      compatibleHealth.find((item) => !usedHealth.has(item.id)) ?? rng.pick(compatibleHealth);
+    const freshHealth = compatibleHealth.filter((item) => !usedHealth.has(item.id));
+    const health = rng.pick(freshHealth.length ? freshHealth : compatibleHealth);
     usedHealth.add(health.id);
     return {
       id: `b-${index + 1}`,
@@ -452,37 +485,43 @@ function rerollCharacterField(state: BunkerGameState, characterId: string, field
   const characters = state.characters.map((character) => {
     if (character.id !== characterId) return character;
     if (field === 'profession') {
-      const pool = PROFESSIONS.filter(
-        (item) => item.minAge <= character.age && item.id !== character.profession.id,
-      );
+      const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.profession.id));
+      const pool = PROFESSIONS.filter((item) => item.minAge <= character.age && item.id !== character.profession.id);
+      const fresh = pool.filter((item) => !used.has(item.id));
       return {
         ...character,
-        profession: rng.pick(pool),
+        profession: rng.pick(fresh.length ? fresh : pool),
         rerollsRemaining: character.rerollsRemaining - 1,
       };
     }
     if (field === 'health') {
-      const pool = HEALTH.filter(
-        (item) =>
-          matchesHealth(item, character.age, character.sex) && item.id !== character.health.id,
+      const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.health.id));
+      const pool = HEALTH.filter((item) =>
+        matchesHealth(item, character.age, character.sex) && item.id !== character.health.id,
       );
+      const fresh = pool.filter((item) => !used.has(item.id));
       return {
         ...character,
-        health: rng.pick(pool),
+        health: rng.pick(fresh.length ? fresh : pool),
         rerollsRemaining: character.rerollsRemaining - 1,
       };
     }
     if (field === 'inventory') {
+      const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.inventory.name));
+      const pool = ITEMS.filter((item) => item.name !== character.inventory.name);
+      const fresh = pool.filter((item) => !used.has(item.name));
       return {
         ...character,
-        inventory: rng.pick(ITEMS.filter((item) => item.name !== character.inventory.name)),
+        inventory: rng.pick(fresh.length ? fresh : pool),
         rerollsRemaining: character.rerollsRemaining - 1,
       };
     }
+    const used = new Set(state.characters.filter((item) => item.id !== character.id).map((item) => item.actionCard.id));
     const pool = ACTION_CARDS.filter((item) => item.id !== character.actionCard.id);
+    const fresh = pool.filter((item) => !used.has(item.id));
     return {
       ...character,
-      actionCard: rng.pick(pool),
+      actionCard: rng.pick(fresh.length ? fresh : pool),
       actionUsed: false,
       shielded: false,
       rerollsRemaining: character.rerollsRemaining - 1,
