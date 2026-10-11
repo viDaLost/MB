@@ -153,7 +153,7 @@ const characterSchema: z.ZodType<BunkerCharacter> = z.object({
   id: z.string(),
   name: z.string(),
   age: z.number().int().min(18).max(80),
-  sex: z.enum(['мужчина', 'женщина', 'небинарный человек']),
+  sex: z.enum(['мужчина', 'женщина']),
   profession: professionSchema,
   health: healthSchema,
   hobby: z.string(),
