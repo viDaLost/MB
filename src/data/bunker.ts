@@ -69,7 +69,7 @@ export const BUNKER_TONES: Record<BunkerTone, { name: string; note: string; desc
     absurd: {
       name: 'Абсурд',
       note: 'лёгкий юмор',
-      description: 'Добрый абсурд и забавные неожиданности без тем 18+.',
+      description: 'Забавные катастрофы, необычные ситуации и неожиданные способности.',
     },
   };
 
