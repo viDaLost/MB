@@ -3210,3 +3210,22 @@ body {
 .bunker-information__warning svg { flex: 0 0 20px; }
 .bunker-information .resource-strip { margin: 0 0 8px; }
 .bunker-page .phase-card > .btn:has(+ .vote-budget) { margin: 0 0 14px; }
+
+/* Full-width iOS home-screen mode, dynamic browser viewport and notches. */
+html, body, #root { width: 100%; max-width: 100%; min-width: 0; }
+html { min-height: 100%; overflow-x: clip; }
+body, #root { min-height: 100svh; min-height: 100dvh; }
+body { overflow-x: clip; }
+body::before, body::after { width: 100%; height: 100%; }
+@media (max-width: 480px) {
+  :root { --page-inline: 12px; }
+  .app-shell, .bunker-page, .phase-card { min-width: 0; max-width: 100%; }
+  .target-grid, .nomination-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .target-grid, .nomination-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (display-mode: standalone) {
+  body { min-height: 100dvh; }
+  #root { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
